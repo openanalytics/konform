@@ -84,7 +84,7 @@ class Konform(object):
         for generator in secret_generator:
             if 'name' not in generator:
                 self._report_problem("secretGenerator without name")
-                pass
+                continue
             if 'literals' in generator:
                 self._report_problem(
                     f"secretGenerator[name: {generator['name']}]: 'envs' is preferred over 'literals'")
@@ -127,12 +127,12 @@ class Konform(object):
         kustomization_file: str = os.path.join(kustomize_dir, "kustomization.yaml")
         if not os.path.exists(kustomization_file):
             self._report_problem(f"{kustomize_dir}: kustomization.yaml not found")
-        else:
-            self._check_resources_dir(kustomize_dir)
-            self._check_patches_dir(kustomize_dir)
-            with open(kustomization_file) as file:
-                doc: dict[str, typing.Any] = yaml.full_load(file)
-                self._check_kustomization(doc, kustomization_file, kustomize_dir)
+            return
+        self._check_resources_dir(kustomize_dir)
+        self._check_patches_dir(kustomize_dir)
+        with open(kustomization_file) as file:
+            doc: dict[str, typing.Any] = yaml.full_load(file)
+            self._check_kustomization(doc, kustomization_file, kustomize_dir)
 
     def _check_patches_dir(self, kustomize_dir: str):
         patches_dir: str = os.path.join(kustomize_dir, "patches")
@@ -148,17 +148,18 @@ class Konform(object):
         self._report_check(cdir)
         for filename in os.listdir(cdir):
             full_filename: str = os.path.join(cdir, filename)
-            if filename.endswith(".yaml"):
-                if filename == "kustomization.yaml":
-                    self._report_problem(f"{cdir}: unexpected kustomization.yaml")
-                else:
-                    with open(full_filename) as file:
-                        self._report_check(f"{full_filename}:")
-                        try:
-                            doc: dict[str, typing.Any] = yaml.full_load(file)
-                            self._check_manifest(doc, filename, full_filename)
-                        except:
-                            self._report_problem("could not parse manifest")
+            if not filename.endswith(".yaml"):
+                continue
+            if filename == "kustomization.yaml":
+                self._report_problem(f"{cdir}: unexpected kustomization.yaml")
+                continue
+            with open(full_filename) as file:
+                self._report_check(f"{full_filename}:")
+                try:
+                    doc: dict[str, typing.Any] = yaml.full_load(file)
+                    self._check_manifest(doc, filename, full_filename)
+                except BaseException:
+                    self._report_problem("could not parse manifest")
 
     def _check_kustomize_tree(self, root_dir: str):
         for current_dir, _, files in os.walk(root_dir):
