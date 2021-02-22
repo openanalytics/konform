@@ -75,17 +75,17 @@ class Konform(object):
         doc -- the in-memory Kustomization file dictionary
         filename -- the name of the Kustomization file
         """
-        if "kind" not in doc.keys():
+        if "kind" not in doc:
             self._report_problem("missing 'kind'")
         elif "." not in filename or filename.split(".")[1] != doc['kind'].lower():
             self._report_problem(f"filename/manifest mismatch for 'kind': {doc['kind']}")
 
     def _check_secret_generator(self, secret_generator: list[dict[str, typing.Any]]):
         for generator in secret_generator:
-            if 'name' not in generator.keys():
+            if 'name' not in generator:
                 self._report_problem("secretGenerator without name")
                 pass
-            if 'literals' in generator.keys():
+            if 'literals' in generator:
                 self._report_problem(
                     f"secretGenerator[name: {generator['name']}]: 'envs' is preferred over 'literals'")
 
@@ -93,7 +93,7 @@ class Konform(object):
             self, doc: dict[str, typing.Any], full_filename: str, kustomize_dir: str):
         self._report_check(full_filename)
 
-        if 'secretGenerator' in doc.keys():
+        if 'secretGenerator' in doc:
             self._check_secret_generator(doc['secretGenerator'])
 
         resources: list[str] = doc.get('resources', [])
