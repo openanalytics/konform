@@ -1,4 +1,4 @@
-from konform import Konform
+from . import Konform
 
 
 def main():
